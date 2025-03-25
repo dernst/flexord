@@ -169,13 +169,14 @@ done for one specific number of clusters `k` or several values `k`:
 
 ```{r nominal_p4}
 titanic_dm <- data.matrix(titanic_df)
-stepFlexclust(titanic_dm, k = 2:4, nrep = 3, 
+stepFlexclust(titanic_dm, k = 2:4, nrep = 1, 
               family = kccaExtendedFamily('kModes')) 
 ```
 
 The output above shows the solutions with lowest within cluster
-distance out of 3 runs for 2 to 4 clusters, in comparison to 1 big
-cluster.  However, none of the algorithms converged. Presumably this
+distance out of 1 run for 2 to 4 clusters, in comparison to 1 big
+cluster. The number of runs was reduced to 1 to reduce run time. The
+results show that none of the algorithms converged. Presumably this
 is due to observations which have the same distance to two centroids
 and which are randomly assigned to one of the two centroids, implying
 that the partitions are still changing in each iteration, even if the
@@ -192,22 +193,25 @@ the original data set, and the stability of these partitions is tested
 via the Adjusted Rand Index [@hubert_arabie_1985]:
 
 ```{r nominal_p5}
-(nom <- bootFlexclust(titanic_dm, k = 2:4, nrep = 3, nboot = 5, 
+(nom <- bootFlexclust(titanic_dm, k = 2:4, nrep = 1, nboot = 5, 
                       family = kccaExtendedFamily('kModes')))
 ```
 Note that ridiculously few repetitions are used for the sake of having
 a short run time. Clearly `nboot` should be increased in applications. 
+Also `nrep` has been set to 1 to reduce run time. 
 
 The resulting ARIs can be quickly visualized via a predefined plotting method:
 ```{r nominal_p6}
 plot(nom)
 ```
 
-Our plot indicates that out of the 2 to 4 cluster solutions, a three
-cluster solution has the highest median ARI out of 5 runs.
+This plot indicates that out of the 2 to 4 cluster solutions, no
+solution has a clearly better performance with respect ot he median
+ARI in case only 5 bootstrap pairs are considered. Clearly one should
+investigate this for more pairs and also after increasing `nrep`.
 
-Now, after deciding on a suitable number of clusters, we could select
-the corresponding cluster solution from `kcca` or `stepFlexclust`, and
+After deciding on a suitable number of clusters, we could select the
+corresponding cluster solution from `kcca` or `stepFlexclust`, and
 make use of the further visualization, prediction, and other
 tools. For this, we refer to the documentation available in
 @leisch_toolbox_2006 and @dolnicar_market_2018.
@@ -243,7 +247,7 @@ algorithm for each `k` is restarted `nrep` times, and only the maximum
 likelihood solution is retained:
 ```{r nominal_m4}
 (nom <- stepFlexmix(titanic_dm ~ 1, k = 2:4,
-                    nrep = 3, # please increase for real-life use
+                    nrep = 1, # please increase for real-life use
                     model = FLXMCregmultinom(r = titanic_ncats)))
 ```
 
@@ -322,7 +326,7 @@ operations on ordinal variables.  We reformulated this distance for
 use in K-centroids clustering in @ernst_ordinal_2025, and implemented
 it in the package such that one can use it for clustering via:
 
-```{r ordindal_p4}
+```{r ordinal_p4}
 kcca(risk, k = 3, family = kccaExtendedFamily('kGDM2'))
 ```
 
@@ -473,14 +477,16 @@ values, which is `"kGower"` (scaling and distances as proposed by
 centroid as provided in **flexclust**, but with NA omission): 
 
 ```{r mixed_2} 
-kcca(vacmot2, k = 3, family = kccaExtendedFamily('kGower'))
+kcca(vacmot2, k = 3, family = kccaExtendedFamily('kGower'),
+     control = list(iter.max = 5))
 ```
+We set the maximum number of iterations to 5 to reduce run time.
 
 In our example above, the default methods for each variable type are
 used (Simple Matching Distance for the categorical variables, squared
 Euclidean distance for the numerical/integer variables, Manhattan
 distance for ordinal variables, and Jaccard distance for logical
-variables).
+variables). 
 
 We could instead provide a vector of length `ncol(vacmot2)` where each
 distance measure to be used is specified. Let us assume that we have
@@ -498,8 +504,10 @@ colnames(vacmot2)
 xmthds <- c('distSimMatch', rep('distManhattan', 3),
             'distSimMatch', rep('distEuclidean', 3))
 kcca(vacmot2, k = 3,
-     family = kccaExtendedFamily('kGower', xmethods = xmthds))
+     family = kccaExtendedFamily('kGower', xmethods = xmthds),
+     control = list(iter.max = 5))
 ```
+Again the maximum number of iterations was reduced. 
 
 For `"kGower"`, all numeric/integer and ordered variables are scaled as
 proposed by @kaufman_finding_1990, by shifting by the minimum
