@@ -29,7 +29,7 @@ Suggests:
        rmarkdown, knitr
 License: GPL-2
 Encoding: UTF-8
-URL: https://github.com/dernst/flexord
+URL: https://zettlchen.github.io/flexord/
 BugReports: https://github.com/dernst/flexord/issues
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
